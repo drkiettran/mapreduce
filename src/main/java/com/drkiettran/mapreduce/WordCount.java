@@ -1,10 +1,6 @@
 package com.drkiettran.mapreduce;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStreamReader;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -24,53 +20,20 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
  * https://hadoop.apache.org/docs/stable/hadoop-mapreduce-client/hadoop-mapreduce-client-core/MapReduceTutorial.html
  */
 public class WordCount {
-	private static final IntWritable ONE = new IntWritable(1);
+	private String inPath;
+	private String outPath;
 
-	/**
-	 * Reading result file store as part-r-00000
-	 *
-	 * @param outputPath - expects to be a directory path localOutputPath - expects
-	 *                   to be a file name.
-	 * @throws IOException
-	 */
-	private static void copyToLocalFile(String outputPath, String localOutputPath) throws IOException {
-		String partFile = String.format("hdfs:%s/part-r-00000", outputPath);
-		Path pt = new Path(partFile);// Location of file in HDFS
-		FileSystem fs = FileSystem.get(new Configuration());
+	public WordCount(Configuration conf, String inPath, String outPath) throws IOException {
+		this.inPath = inPath;
+		this.outPath = outPath;
+		Path path = new Path(outPath);
+		FileSystem hdfs = path.getFileSystem(conf);
+		hdfs.delete(path, true);
 
-		try (BufferedReader br = new BufferedReader(new InputStreamReader(fs.open(pt)));
-				BufferedWriter bw = new BufferedWriter(new FileWriter(localOutputPath))) {
-			String line = br.readLine();
-			while (line != null) {
-				bw.write(line);
-				bw.write('\n');
-				line = br.readLine();
-			}
-		} finally {
-			fs.close();
-		}
 	}
 
-	private static void deleteOutputFolder(String folder) throws IOException {
-		FileSystem fs = FileSystem.get(new Configuration());
-		Path path = new Path(folder);
-		fs.delete(path, true);
-	}
+	public int run(Job job) throws IllegalArgumentException, IOException, ClassNotFoundException, InterruptedException {
 
-	public static void main(String[] argv) throws Exception {
-		String localOutputPath = null;
-		if (argv.length < 2) {
-			System.out.println("at least input file/directory and output directory");
-			System.exit(-1);
-		} else if (argv.length > 2) {
-			localOutputPath = argv[2];
-		}
-		String inputPath = argv[0];
-		String outputPath = argv[1];
-		deleteOutputFolder(outputPath);
-
-		Configuration conf = new Configuration();
-		Job job = Job.getInstance(conf, "Word Count");
 		job.setJarByClass(WordCount.class);
 		job.setMapperClass(TokenizerMapper.class);
 		job.setCombinerClass(IntSumReducer.class);
@@ -78,13 +41,23 @@ public class WordCount {
 		job.setOutputKeyClass(Text.class);
 		job.setOutputValueClass(IntWritable.class);
 
-		FileInputFormat.addInputPath(job, new Path(inputPath));
-		FileOutputFormat.setOutputPath(job, new Path(outputPath));
+		FileInputFormat.addInputPath(job, new Path(inPath));
+		FileOutputFormat.setOutputPath(job, new Path(outPath));
 
-		int result = job.waitForCompletion(true) ? 0 : 1;
-		if (null != localOutputPath) {
-			copyToLocalFile(outputPath, localOutputPath);
+		return job.waitForCompletion(true) ? 0 : 1;
+	}
+
+	public static void main(String[] argv) throws Exception {
+		if (argv.length < 2) {
+			System.out.println("at least input file/directory and output directory");
+			System.exit(-1);
 		}
-		System.exit(result);
+		String inputPath = argv[0];
+		String outputPath = argv[1];
+
+		Configuration conf = new Configuration();
+		WordCount wc = new WordCount(conf, inputPath, outputPath);
+		Job job = Job.getInstance(conf, "Word Count");
+		System.exit(wc.run(job));
 	}
 }
