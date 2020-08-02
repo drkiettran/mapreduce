@@ -18,8 +18,9 @@ import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
  * Extracted from Hadoop for Dummies (2014)
  */
 public class FlightsByCarriers {
-    private static Long totalFlights(String outputPath) throws IOException {
-        String partFile = String.format("hdfs:%s/part-r-00000", outputPath);
+
+	private Long totalFlights() throws IOException {
+		String partFile = String.format("hdfs:%s/part-r-00000", outPath);
         Path pt = new Path(partFile);// Location of file in HDFS
         FileSystem fs = FileSystem.get(new Configuration());
         Long totalFlights = 0L;
@@ -41,43 +42,55 @@ public class FlightsByCarriers {
         }
     }
 
-    private static void deleteOutputFolder(String folder) throws IOException {
-        FileSystem fs = FileSystem.get(new Configuration());
-        Path path = new Path(folder);
-        fs.delete(path, true);
-    }
+	private String inPath;
+	private String outPath;
+
+	public FlightsByCarriers(Configuration conf, String inPath, String outPath) throws IOException {
+		this.inPath = inPath;
+		this.outPath = outPath;
+		Path path = new Path(outPath);
+		FileSystem hdfs = path.getFileSystem(conf);
+		hdfs.delete(path, true);
+
+	}
+
+	public void run(Job job)
+			throws IllegalArgumentException, IOException, ClassNotFoundException, InterruptedException {
+        job.setJarByClass(FlightsByCarriers.class);
+        job.setJobName("FlightsByCarriers");
+
+		TextInputFormat.addInputPath(job, new Path(inPath));
+        job.setInputFormatClass(TextInputFormat.class);
+
+        job.setMapperClass(FlightsByCarriersMapper.class);
+        job.setReducerClass(FlightsByCarriersReducer.class);
+
+		TextOutputFormat.setOutputPath(job, new Path(outPath));
+        job.setOutputFormatClass(TextOutputFormat.class);
+        job.setOutputKeyClass(Text.class);
+        job.setOutputValueClass(IntWritable.class);
+
+        job.waitForCompletion(true);
+	}
 
 	/**
 	 * 
 	 * @param argv argv[0]: input path argv[1]; output path
 	 * @throws Exception
 	 */
-    public static void main(String[] argv) throws Exception {
-        if (argv.length < 2) {
-            System.out.println("at least input file/directory and output directory");
-            System.exit(-1);
-        }
+	public static void main(String[] argv) throws Exception {
+		if (argv.length < 2) {
+			System.out.println("at least input file/directory and output directory");
+			System.exit(-1);
+		}
 
-        String inputPath = argv[0];
-        String outputPath = argv[1];
-		deleteOutputFolder(outputPath);
+		String inputPath = argv[0];
+		String outputPath = argv[1];
 
-        Job job = Job.getInstance();
-        job.setJarByClass(FlightsByCarriers.class);
-        job.setJobName("FlightsByCarriers");
-
-        TextInputFormat.addInputPath(job, new Path(inputPath));
-        job.setInputFormatClass(TextInputFormat.class);
-
-        job.setMapperClass(FlightsByCarriersMapper.class);
-        job.setReducerClass(FlightsByCarriersReducer.class);
-
-        TextOutputFormat.setOutputPath(job, new Path(outputPath));
-        job.setOutputFormatClass(TextOutputFormat.class);
-        job.setOutputKeyClass(Text.class);
-        job.setOutputValueClass(IntWritable.class);
-
-        job.waitForCompletion(true);
-        System.out.println("total flights:" + totalFlights(outputPath));
+		Configuration conf = new Configuration();
+		FlightsByCarriers fbc = new FlightsByCarriers(conf, inputPath, outputPath);
+		Job job = Job.getInstance(conf, "Flights by Carriers");
+		fbc.run(job);
+		System.out.println("total flights:" + fbc.totalFlights());
     }
 }
