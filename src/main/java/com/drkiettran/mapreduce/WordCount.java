@@ -24,6 +24,21 @@ public class WordCount {
 	private String outPath;
 
 	public WordCount(Configuration conf, String inPath, String outPath) throws IOException {
+		conf.set("yarn.resourcemanager.address", "hadoop-master:8032"); // see step 3
+		conf.set("mapreduce.framework.name", "yarn"); 
+		conf.set("fs.defaultFS", "hdfs://hadoop-master:9000/"); // see step 2
+		System.setProperty("HADOOP_USER_NAME", "hadoop");
+//		conf.set("yarn.application.classpath",        
+//		             "$HADOOP_CONF_DIR,$HADOOP_COMMON_HOME/*,$HADOOP_COMMON_HOME/lib/*,"
+//		                + "$HADOOP_HDFS_HOME/*,$HADOOP_HDFS_HOME/lib/*,"
+//		                + "$HADOOP_YARN_HOME/*,$HADOOP_YARN_HOME/lib/*,"
+//		                + "$HADOOP_MAPRED_HOME/*,$HADOOP_MAPRED_HOME/lib/*");
+		
+		 conf.set("yarn.application.classpath",
+	              "{{HADOOP_CONF_DIR}},{{HADOOP_COMMON_HOME}}/share/hadoop/common/*,{{HADOOP_COMMON_HOME}}/share/hadoop/common/lib/*,"
+	                  + " {{HADOOP_HDFS_HOME}}/share/hadoop/hdfs/*,{{HADOOP_HDFS_HOME}}/share/hadoop/hdfs/lib/*,"
+	                  + "{{HADOOP_MAPRED_HOME}}/share/hadoop/mapreduce/*,{{HADOOP_MAPRED_HOME}}/share/hadoop/mapreduce/lib/*,"
+	                  + "{{HADOOP_YARN_HOME}}/share/hadoop/yarn/*,{{HADOOP_YARN_HOME}}/share/hadoop/yarn/lib/*");
 		this.inPath = inPath;
 		this.outPath = outPath;
 		Path path = new Path(outPath);
