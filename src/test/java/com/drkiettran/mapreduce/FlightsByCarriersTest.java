@@ -51,7 +51,13 @@ public class FlightsByCarriersTest {
 
 	@Test
 	public void shouldPrintReport() throws IOException {
-		BufferedReader br = new BufferedReader(new StringReader("abc\t1\ndef\t2"));
-		fbc.printReport(br);
+		try (BufferedReader br = new BufferedReader(new StringReader("abc\t1\ndef\t2"))) {
+			fbc.printTotalFlightsReport(br);
+		}
+
+		try (BufferedReader br = new BufferedReader(new StringReader("abc\t1\ndef\t2"))) {
+			fbc.printTotalUniqueAirlinesReport(br);
+		}
+
 	}
 }

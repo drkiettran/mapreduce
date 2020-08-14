@@ -62,9 +62,11 @@ public class WordCount {
 
 	}
 
-	public void printReport(BufferedReader br) throws IOException {
+	public void printTotalWordsReport(BufferedReader br) throws IOException {
 		System.out.printf("Total words %d\n", HdfsUtil.total(br));
-		br.reset();
+	}
+
+	public void printTotalUniqueWordsReport(BufferedReader br) throws IOException {
 		System.out.printf("Total unique words %d\n", HdfsUtil.totalUnique(br));
 	}
 
@@ -72,7 +74,12 @@ public class WordCount {
 		WordCount wc = prepare(argv);
 		wc.run(job);
 		FileSystem fs = FileSystem.get(conf);
-		BufferedReader br = new BufferedReader(new InputStreamReader(fs.open(outputFile)));
-		wc.printReport(br);
+		try (BufferedReader br = new BufferedReader(new InputStreamReader(fs.open(outputFile)))) {
+			wc.printTotalWordsReport(br);
+		}
+		try (BufferedReader br = new BufferedReader(new InputStreamReader(fs.open(outputFile)))) {
+			wc.printTotalUniqueWordsReport(br);
+		}
+
 	}
 }

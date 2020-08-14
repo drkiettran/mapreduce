@@ -3,9 +3,7 @@ package com.drkiettran.mapreduce;
 import static org.hamcrest.CoreMatchers.equalTo;
 
 import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.io.StringReader;
 
 import org.apache.hadoop.fs.FileSystem;
@@ -13,8 +11,6 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.Job;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.core.IsNull;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -61,7 +57,13 @@ public class WordCountTest {
 
 	@Test
 	public void shouldPrintReport() throws IOException {
-		BufferedReader br = new BufferedReader(new StringReader("abc\t1\ndef\t2"));
-		wc.printReport(br);
+		try (BufferedReader br = new BufferedReader(new StringReader("abc\t1\ndef\t2"))) {
+			wc.printTotalWordsReport(br);
+		}
+
+		try (BufferedReader br = new BufferedReader(new StringReader("abc\t1\ndef\t2"))) {
+			wc.printTotalUniqueWordsReport(br);
+		}
+
 	}
 }

@@ -66,7 +66,7 @@ hdfs dfs -cat /tmp/othello/part-r-00000
 If you want to copy the result into a local file, provide a location of the local file to be copied.
 
 ```shell script
-hadoop jar target/cisc-525-mapreduce-jar-with-dependencies.jar com.drkiettran.mapreduce.WordCount \
+yarn jar target/cisc-525-mapreduce-jar-with-dependencies.jar com.drkiettran.mapreduce.WordCount \
        /user/student/shakespeare/tragedy/othello.txt /tmp/othello /tmp/othello
 ```
 

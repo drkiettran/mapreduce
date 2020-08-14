@@ -50,13 +50,21 @@ public class FlightsByCarriers {
 		FlightsByCarriers fbc = prepare(argv);
 		fbc.run(job);
 		FileSystem fs = FileSystem.get(conf);
-		BufferedReader br = new BufferedReader(new InputStreamReader(fs.open(outputPath)));
-		fbc.printReport(br);
+		try (BufferedReader br = new BufferedReader(new InputStreamReader(fs.open(outputFile)))) {
+			fbc.printTotalFlightsReport(br);
+		}
+		try (BufferedReader br = new BufferedReader(new InputStreamReader(fs.open(outputFile)))) {
+			fbc.printTotalUniqueAirlinesReport(br);
+		}
+
 	}
 
-	public void printReport(BufferedReader br) throws IOException {
-		System.out.println("total flights:" + HdfsUtil.total(br));
-		System.out.println("total unique flights:" + HdfsUtil.totalUnique(br));
+	public void printTotalFlightsReport(BufferedReader br) throws IOException {
+		System.out.println("Total flights:" + HdfsUtil.total(br));
+	}
+
+	public void printTotalUniqueAirlinesReport(BufferedReader br) throws IOException {
+		System.out.println("Total unique airlines:" + HdfsUtil.totalUnique(br));
 	}
 
 	public static FlightsByCarriers prepare(String[] argv) throws IOException {
