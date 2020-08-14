@@ -1,6 +1,8 @@
 package com.drkiettran.mapreduce;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -20,59 +22,57 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
  * https://hadoop.apache.org/docs/stable/hadoop-mapreduce-client/hadoop-mapreduce-client-core/MapReduceTutorial.html
  */
 public class WordCount {
-	private String inPath;
-	private String outPath;
 
-	public WordCount(Configuration conf, String inPath, String outPath) throws IOException {
-		conf.set("yarn.resourcemanager.address", "hadoop-master:8032"); // see step 3
-		conf.set("mapreduce.framework.name", "yarn"); 
-		conf.set("fs.defaultFS", "hdfs://hadoop-master:9000/"); // see step 2
-		System.setProperty("HADOOP_USER_NAME", "hadoop");
-//		conf.set("yarn.application.classpath",        
-//		             "$HADOOP_CONF_DIR,$HADOOP_COMMON_HOME/*,$HADOOP_COMMON_HOME/lib/*,"
-//		                + "$HADOOP_HDFS_HOME/*,$HADOOP_HDFS_HOME/lib/*,"
-//		                + "$HADOOP_YARN_HOME/*,$HADOOP_YARN_HOME/lib/*,"
-//		                + "$HADOOP_MAPRED_HOME/*,$HADOOP_MAPRED_HOME/lib/*");
-		
-		 conf.set("yarn.application.classpath",
-	              "{{HADOOP_CONF_DIR}},{{HADOOP_COMMON_HOME}}/share/hadoop/common/*,{{HADOOP_COMMON_HOME}}/share/hadoop/common/lib/*,"
-	                  + " {{HADOOP_HDFS_HOME}}/share/hadoop/hdfs/*,{{HADOOP_HDFS_HOME}}/share/hadoop/hdfs/lib/*,"
-	                  + "{{HADOOP_MAPRED_HOME}}/share/hadoop/mapreduce/*,{{HADOOP_MAPRED_HOME}}/share/hadoop/mapreduce/lib/*,"
-	                  + "{{HADOOP_YARN_HOME}}/share/hadoop/yarn/*,{{HADOOP_YARN_HOME}}/share/hadoop/yarn/lib/*");
-		this.inPath = inPath;
-		this.outPath = outPath;
-		Path path = new Path(outPath);
-		FileSystem hdfs = path.getFileSystem(conf);
-		hdfs.delete(path, true);
+	private static Job job;
+	private static Path outputPath;
+	private static Configuration conf;
+	private static Path outputFile;
 
+	public WordCount() throws IOException {
 	}
 
 	public int run(Job job) throws IllegalArgumentException, IOException, ClassNotFoundException, InterruptedException {
-
 		job.setJarByClass(WordCount.class);
 		job.setMapperClass(TokenizerMapper.class);
 		job.setCombinerClass(IntSumReducer.class);
 		job.setReducerClass(IntSumReducer.class);
 		job.setOutputKeyClass(Text.class);
 		job.setOutputValueClass(IntWritable.class);
-
-		FileInputFormat.addInputPath(job, new Path(inPath));
-		FileOutputFormat.setOutputPath(job, new Path(outPath));
-
 		return job.waitForCompletion(true) ? 0 : 1;
 	}
 
-	public static void main(String[] argv) throws Exception {
+	public static WordCount prepare(String[] argv) throws IOException {
 		if (argv.length < 2) {
 			System.out.println("at least input file/directory and output directory");
-			System.exit(-1);
+			return null;
 		}
-		String inputPath = argv[0];
-		String outputPath = argv[1];
 
-		Configuration conf = new Configuration();
-		WordCount wc = new WordCount(conf, inputPath, outputPath);
-		Job job = Job.getInstance(conf, "Word Count");
-		System.exit(wc.run(job));
+		Path inputPath = new Path(argv[0]);
+		outputPath = new Path(argv[1]);
+		outputFile = new Path(argv[1] + "/part-r-00000");
+		conf = new Configuration();
+		HdfsUtil.deleteHdfsFile(conf, outputPath);
+
+		WordCount wc = new WordCount();
+		job = Job.getInstance(conf, "Word Count");
+
+		FileInputFormat.addInputPath(job, inputPath);
+		FileOutputFormat.setOutputPath(job, outputPath);
+		return wc;
+
+	}
+
+	public void printReport(BufferedReader br) throws IOException {
+		System.out.printf("Total words %d\n", HdfsUtil.total(br));
+		br.reset();
+		System.out.printf("Total unique words %d\n", HdfsUtil.totalUnique(br));
+	}
+
+	public static void main(String[] argv) throws Exception {
+		WordCount wc = prepare(argv);
+		wc.run(job);
+		FileSystem fs = FileSystem.get(conf);
+		BufferedReader br = new BufferedReader(new InputStreamReader(fs.open(outputFile)));
+		wc.printReport(br);
 	}
 }

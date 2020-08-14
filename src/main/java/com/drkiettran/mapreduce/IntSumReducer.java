@@ -5,11 +5,10 @@ import java.io.IOException;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class IntSumReducer extends Reducer<Text, IntWritable, Text, IntWritable> {
-	private static final Logger LOGGER = LoggerFactory.getLogger(IntSumReducer.class);
+	// private static final Logger LOGGER =
+	// LoggerFactory.getLogger(IntSumReducer.class);
 	private IntWritable result = new IntWritable();
 
 	@Override
@@ -21,7 +20,7 @@ public class IntSumReducer extends Reducer<Text, IntWritable, Text, IntWritable>
 		}
 		result.set(sum);
 		context.write(key, result);
-		LOGGER.info("{} occurs {} times", key, sum);
-		System.out.println(String.format("%s occurs %d times", key, sum));
+		// LOGGER.info("{} occurs {} times", key, sum);
+		// System.out.println(String.format("%s occurs %d times", key, sum));
 	}
 }
