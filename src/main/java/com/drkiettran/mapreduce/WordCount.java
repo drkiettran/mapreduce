@@ -38,6 +38,17 @@ public class WordCount {
 		job.setReducerClass(IntSumReducer.class);
 		job.setOutputKeyClass(Text.class);
 		job.setOutputValueClass(IntWritable.class);
+		String classPath = "/opt/hadoop/hadoop/etc/hadoop," + "/opt/hadoop/hadoop/share/hadoop/common/*,"
+				+ "/opt/hadoop/hadoop/share/hadoop/common/lib/*," + "/opt/hadoop/hadoop/share/hadoop/hdfs/*,"
+				+ "/opt/hadoop/hadoop/share/hadoop/hdfs/lib/*," + "/opt/hadoop/hadoop/share/hadoop/mapreduce/*,"
+				+ "/opt/hadoop/hadoop/share/hadoop/mapreduce/lib/*," + "/opt/hadoop/hadoop/share/hadoop/yarn/*,"
+				+ "/opt/hadoop/hadoop/share/hadoop/yarn/lib/*";
+
+		Configuration conf = job.getConfiguration();
+		conf.set("yarn.application.classpath", classPath);
+		conf.set("yarn.app.mapreduce.am.env", "/opt/hadoop/hadoop");
+		conf.set("mapreduce.map.env", "/opt/hadoop/hadoop");
+		conf.set("mapreduce.reduce.env", "/opt/hadoop/hadoop");
 		return job.waitForCompletion(true) ? 0 : 1;
 	}
 
