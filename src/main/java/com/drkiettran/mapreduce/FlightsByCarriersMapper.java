@@ -25,9 +25,9 @@ public class FlightsByCarriersMapper extends Mapper<LongWritable, Text, Text, In
          * are located. Thus, skip processing when the index is 0.
          */
         if (key.get() > 0) {
-            String[] lines = new CSVParser().parseLine(value.toString());
+            String[] attributes = new CSVParser().parseLine(value.toString());
             /* the 8th index is that for the name of airline carrier */
-            Text uniqueCarrier = new Text(lines[8]);
+            Text uniqueCarrier = new Text(attributes[8]);
             context.write(uniqueCarrier, ONE);
         } else {
             LOGGER.info("skip csv columns heading!");

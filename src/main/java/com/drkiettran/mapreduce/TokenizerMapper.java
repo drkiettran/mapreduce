@@ -16,7 +16,7 @@ public class TokenizerMapper extends Mapper<LongWritable, Text, Text, IntWritabl
 
 	@Override
 	public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
-		StringTokenizer itr = new StringTokenizer(value.toString().replaceAll("[^A-Za-z0-9 ]", " "));
+		StringTokenizer itr = new StringTokenizer(value.toString().toLowerCase().replaceAll("[^A-Za-z0-9 ]", " "));
 		// LOGGER.info("input: {}", context.getInputSplit());
 		// System.out.println(String.format("%d words", itr.countTokens()));
 		while (itr.hasMoreTokens()) {

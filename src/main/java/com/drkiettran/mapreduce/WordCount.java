@@ -23,6 +23,8 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
  */
 public class WordCount {
 
+	private static final String APP_NAME = "Word Count";
+	private static final String PART_R_00000 = "/part-r-00000";
 	private static Job job;
 	private static Path outputPath;
 	private static Configuration conf;
@@ -60,12 +62,12 @@ public class WordCount {
 
 		Path inputPath = new Path(argv[0]);
 		outputPath = new Path(argv[1]);
-		outputFile = new Path(argv[1] + "/part-r-00000");
+		outputFile = new Path(argv[1] + PART_R_00000);
 		conf = new Configuration();
 		HdfsUtil.deleteHdfsFile(conf, outputPath);
 
 		WordCount wc = new WordCount();
-		job = Job.getInstance(conf, "Word Count");
+		job = Job.getInstance(conf, APP_NAME);
 
 		FileInputFormat.addInputPath(job, inputPath);
 		FileOutputFormat.setOutputPath(job, outputPath);

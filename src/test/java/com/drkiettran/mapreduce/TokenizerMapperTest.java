@@ -60,7 +60,7 @@ public class TokenizerMapperTest {
 
 		Mockito.verify(context).write(textCaptor.capture(), intWritableCaptor.capture());
 
-		assertThat(textCaptor.getValue(), is(new Text("Hello")));
+		assertThat(textCaptor.getValue(), is(new Text("hello")));
 		assertThat(intWritableCaptor.getValue(), is(new IntWritable(1)));
 	}
 }
